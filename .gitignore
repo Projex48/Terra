@@ -1,5 +1,3 @@
-/isodir
-
 # Prerequisites
 *.d
 
@@ -43,5 +41,6 @@
 *.dwo
 
 /src/isodir
-src/exos.iso
-src/exos
+/src/iso_root
+/src/limine
+/src/terra.iso
