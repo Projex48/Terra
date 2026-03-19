@@ -44,9 +44,8 @@ void kernel_main(void) {
 
   setBackground(GRAY);
 
-  createRectangle(0, 0, 25, 400, GREEN);
-
-  createRectangle(25, 375, 250, 400, GREEN);
+  putchar('h', 0, 0, WHITE, GRAY);
+  putchar('i', 1, 0, WHITE, GRAY);
 
   // We're done, just hang...
   hcf();
