@@ -16,8 +16,8 @@
 /************************************************/
 // Local includes
 
-#include "terra_graphics.c"
-#include "terra_syscalls.c"
+#include "./graphics/t_graphics.c"
+#include "./memory/t_syscalls.c"
 
 /************************************************/
 // Limine functions

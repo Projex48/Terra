@@ -9,16 +9,16 @@ override OUTPUT := terra
 TOOLCHAIN :=
 TOOLCHAIN_PREFIX :=
 ifneq ($(TOOLCHAIN),)
-    ifeq ($(TOOLCHAIN_PREFIX),)
-        TOOLCHAIN_PREFIX := $(TOOLCHAIN)-
-    endif
+	ifeq ($(TOOLCHAIN_PREFIX),)
+		TOOLCHAIN_PREFIX := $(TOOLCHAIN)-
+	endif
 endif
 
 # User controllable C compiler command.
 ifneq ($(TOOLCHAIN_PREFIX),)
-    CC := $(TOOLCHAIN_PREFIX)gcc
+	CC := $(TOOLCHAIN_PREFIX)gcc
 else
-    CC := cc
+	CC := cc
 endif
 
 # User controllable linker command.
@@ -26,8 +26,8 @@ LD := $(TOOLCHAIN_PREFIX)ld
 
 # Defaults overrides for variables if using "llvm" as toolchain.
 ifeq ($(TOOLCHAIN),llvm)
-    CC := clang
-    LD := ld.lld
+	CC := clang
+	LD := ld.lld
 endif
 
 # User controllable C flags.
@@ -47,53 +47,53 @@ override CC_IS_CLANG := $(shell ! $(CC) --version 2>/dev/null | grep -q '^Target
 
 # If the C compiler is Clang, set the target as needed.
 ifeq ($(CC_IS_CLANG),1)
-    override CC += \
-        -target x86_64-elf
+	override CC += \
+		-target x86_64-elf
 endif
 
 # Internal C flags that should not be changed by the user.
 override CFLAGS += \
-    -Wall \
-    -Wextra \
-    -std=gnu11 \
-    -ffreestanding \
-    -fno-stack-protector \
-    -fno-stack-check \
-    -fno-lto \
-    -fno-PIC \
-    -ffunction-sections \
-    -fdata-sections \
-    -m64 \
-    -march=x86-64 \
-    -mabi=sysv \
-    -mno-80387 \
-    -mno-mmx \
-    -mno-sse \
-    -mno-sse2 \
-    -mno-red-zone \
-    -mcmodel=kernel
+	-Wall \
+	-Wextra \
+	-std=gnu11 \
+	-ffreestanding \
+	-fno-stack-protector \
+	-fno-stack-check \
+	-fno-lto \
+	-fno-PIC \
+	-ffunction-sections \
+	-fdata-sections \
+	-m64 \
+	-march=x86-64 \
+	-mabi=sysv \
+	-mno-80387 \
+	-mno-mmx \
+	-mno-sse \
+	-mno-sse2 \
+	-mno-red-zone \
+	-mcmodel=kernel
 
 # Internal C preprocessor flags that should not be changed by the user.
 override CPPFLAGS := \
-    -I src \
-    $(CPPFLAGS) \
-    -MMD \
-    -MP
+	-I src \
+	$(CPPFLAGS) \
+	-MMD \
+	-MP
 
 # Internal nasm flags that should not be changed by the user.
 override NASMFLAGS := \
-    -f elf64 \
-    $(patsubst -g,-g -F dwarf,$(NASMFLAGS)) \
-    -Wall
+	-f elf64 \
+	$(patsubst -g,-g -F dwarf,$(NASMFLAGS)) \
+	-Wall
 
 # Internal linker flags that should not be changed by the user.
 override LDFLAGS += \
-    -m elf_x86_64 \
-    -nostdlib \
-    -static \
-    -z max-page-size=0x1000 \
-    --gc-sections \
-    -T linker.lds
+	-m elf_x86_64 \
+	-nostdlib \
+	-static \
+	-z max-page-size=0x1000 \
+	--gc-sections \
+	-T linker.lds
 
 # Use "find" to glob all *.c, *.S, and *.asm files in the tree and obtain the
 # object and header dependency file names.
@@ -101,7 +101,7 @@ override SRCFILES := main.c
 override CFILES := $(filter %.c,$(SRCFILES))
 override ASFILES := $(filter %.S,$(SRCFILES))
 override NASMFILES := $(filter %.asm,$(SRCFILES))
-override OBJ := $(addprefix obj/,$(CFILES:.c=.c.o) $(ASFILES:.S=.S.o) $(NASMFILES:.asm=.asm.o)) font.o
+override OBJ := $(addprefix obj/,$(CFILES:.c=.c.o) $(ASFILES:.S=.S.o) $(NASMFILES:.asm=.asm.o) font.o)
 override HEADER_DEPS := $(addprefix obj/,$(CFILES:.c=.c.d) $(ASFILES:.S=.S.d))
 
 # Default target. This must come first, before header dependencies.
@@ -137,10 +137,25 @@ clean:
 	rm -rf bin obj
 	rm -rf $(OUTPUT).iso
 
+# Pull limine and make
+.PHONY: limine
+limine:
+	git clone https://codeberg.org/Limine/Limine.git limine --branch=v11.x-binary --depth=1
+	make -C limine
 
-# Create the iso.
-.PHONY: iso
-iso: clean all
+	mkdir -p iso_root
+	mkdir -p iso_root/boot
+	mkdir -p iso_root/boot/limine
+	cp -v limine.conf limine/limine-bios.sys limine/limine-bios-cd.bin \
+	limine/limine-uefi-cd.bin iso_root/boot/limine/
+
+	mkdir -p iso_root/EFI/BOOT
+	cp -v limine/BOOTX64.EFI iso_root/EFI/BOOT/
+	cp -v limine/BOOTIA32.EFI iso_root/EFI/BOOT/
+
+# Install the bootloader
+.PHONY: installBoot
+installBoot: clean all
 	cp -v bin/$(OUTPUT) iso_root/boot/
 	
 	xorriso -as mkisofs -R -r -J \
@@ -153,3 +168,11 @@ iso: clean all
 	
 	./limine/limine bios-install $(OUTPUT).iso
 	@echo "Run qemu-system-x86_64 -cdrom $(OUTPUT).iso to start"
+
+# Make bootable iso, install dependencies
+.PHONY: terra
+terra:
+	@if [ ! -d "limine" ]; then \
+		$(MAKE) limine; \
+	fi
+	$(MAKE) installBoot

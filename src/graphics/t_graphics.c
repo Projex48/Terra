@@ -1,7 +1,7 @@
 #ifndef TERRA_GRAPHICS
 #define TERRA_GRAPHICS
 
-/*************************************/
+/*************************** **********/
 // EXOs Graphics Driver
 
 /***********************************************************/
@@ -14,8 +14,8 @@
 /***********************************************************/
 // Local includes
 
-#include "limine.h"
-#include "terra_syscalls.c"
+#include "../limine.h"
+#include "../memory/t_syscalls.c"
 
 /***********************************************************/
 // External
