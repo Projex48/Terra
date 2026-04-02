@@ -20,7 +20,7 @@
 #include "./memory/t_syscalls.c"
 
 /************************************************/
-// Limine functions
+// Limine requests
 
 // Set the base revision to 5, this is recommended as this is the latest
 // base revision described by the Limine boot protocol specification.

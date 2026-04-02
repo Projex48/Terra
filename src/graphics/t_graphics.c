@@ -24,7 +24,6 @@
 extern char _binary_font_psf_start[];
 extern char _binary_font_psf_end;
 
-
 /***********************************************************/
 // Structs
 
@@ -67,7 +66,7 @@ enum color_palette {
 typedef uint32_t size_type;
 
 /***********************************************************/
-// Globals
+// Limine requests
 
 // Set the base revision to 5, this is recommended as this is the latest
 // base revision described by the Limine boot protocol specification.
@@ -86,6 +85,9 @@ __attribute__((
     section(
         ".limine_requests"))) static volatile struct limine_framebuffer_request
     framebuffer_request = {.id = LIMINE_FRAMEBUFFER_REQUEST_ID, .revision = 0};
+
+/***********************************************************/
+// Globals
 
 // Linear framebuffer
 struct limine_framebuffer *framebuffer;
@@ -109,12 +111,13 @@ void psf_initialize() {
   }
 
   // Gets the offset of the table
-  char *s = (char *)((unsigned char *)&_binary_font_psf_start + font->headersize +
-                     font->numglyph + font->bytesperglyph);
+  char *s = (char *)((unsigned char *)&_binary_font_psf_start +
+                     font->headersize + font->numglyph + font->bytesperglyph);
 
   // Allocate memory for translation
   // PAIN AND SUFFERING, THAT'S IT... IT'S ALL PAIN 💀
   unicode = calloc(USHRT_MAX, 2);
+  
   while (s < (unsigned char *)&_binary_font_psf_end) {
     uint16_t uc = (uint16_t)((unsigned char *)s[0]);
     if (uc == 0xFF) {
@@ -206,8 +209,8 @@ void putchar(
       (c > 0 && c < font->numglyph ? c : 0) * font->bytesperglyph;
 
   // Calculates the position of the top left corner on screen
-  int offs =
-      (cy * font->height * framebuffer->pitch) + (cx * (font->width + 1) * sizeof(PIXEL));
+  int offs = (cy * font->height * framebuffer->pitch) +
+             (cx * (font->width + 1) * sizeof(PIXEL));
 
   size_type bytesPerGlyphLine = (width + 7) / 8;
 
@@ -219,13 +222,12 @@ void putchar(
     // Get most significant bit
     uint8_t mask = 1 << 7;
     // Display row
-    for (x = 0; x < font->width; ++x)
-    {
-      *((PIXEL*)(framebuffer + line)) = (*currentByte & mask) ? fg : bg;
+    for (x = 0; x < font->width; ++x) {
+      *((PIXEL *)(framebuffer + line)) = (*currentByte & mask) ? fg : bg;
       mask >>= 1;
       if (!mask) {
         // Already read byte from glyph
-        mask = 1<<7;
+        mask = 1 << 7;
         // move on to next byte
         ++currentByte;
       }
